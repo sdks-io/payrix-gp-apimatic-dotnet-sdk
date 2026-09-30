@@ -1,0 +1,74 @@
+using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Payrix.Core.Extensions;
+using Payrix.Core.Models;
+
+namespace Payrix.Models.AnyOf;
+
+/// <summary>
+/// The identifier (ID) of the team that this Alert relates to. The Alert is triggered based on the activity of this Team.
+/// </summary>
+[JsonConverter(typeof(AlertsPostRequestModelTeamConverter))]
+public record AlertsPostRequestModelTeam
+{
+    private readonly Optional<string> _stringValue;
+
+    private readonly Optional<TeamsPostRequest> _teamsPostRequestValue;
+
+    private AlertsPostRequestModelTeam(Optional<string> stringValue, Optional<TeamsPostRequest> teamsPostRequestValue)
+    {
+        _stringValue = stringValue;
+        _teamsPostRequestValue = teamsPostRequestValue;
+    }
+
+    public static AlertsPostRequestModelTeam String(string value) => new(Optional<string>.Some(value), default);
+
+    public static AlertsPostRequestModelTeam TeamsPostRequest(TeamsPostRequest value) =>
+        new(default, Optional<TeamsPostRequest>.Some(value));
+
+    public bool TryGetString(out string value) => _stringValue.TryGetValue(out value);
+
+    public bool TryGetTeamsPostRequest(out TeamsPostRequest value) => _teamsPostRequestValue.TryGetValue(out value);
+
+    public static implicit operator AlertsPostRequestModelTeam(string value) => String(value);
+
+    public static implicit operator AlertsPostRequestModelTeam(TeamsPostRequest value) => TeamsPostRequest(value);
+}
+
+file sealed class AlertsPostRequestModelTeamConverter : JsonConverter<AlertsPostRequestModelTeam>
+{
+    public override AlertsPostRequestModelTeam Read(ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var root = doc.RootElement;
+        if (root.ValueKind == JsonValueKind.String)
+        {
+            var value = root.GetString()!;
+            return AlertsPostRequestModelTeam.String(value);
+        }
+        if (JsonSerializer.TryDeserialize<TeamsPostRequest>(root, options, out var teamsPostRequestValue))
+        {
+            return AlertsPostRequestModelTeam.TeamsPostRequest(teamsPostRequestValue);
+        }
+        throw new JsonException($"JSON does not match string or TeamsPostRequest schemas: {root.ToString()}");
+    }
+
+    public override void Write(Utf8JsonWriter writer, AlertsPostRequestModelTeam value, JsonSerializerOptions options)
+    {
+        if (value.TryGetString(out var stringValue))
+        {
+            JsonSerializer.Serialize(writer, stringValue, options);
+        }
+        else if (value.TryGetTeamsPostRequest(out var teamsPostRequestValue))
+        {
+            JsonSerializer.Serialize(writer, teamsPostRequestValue, options);
+        }
+        else
+        {
+            throw new JsonException($"{nameof(AlertsPostRequestModelTeam)} contains no valid value to serialize.");
+        }
+    }
+}

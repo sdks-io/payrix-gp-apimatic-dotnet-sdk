@@ -1,0 +1,25 @@
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using Payrix.Core.Models;
+
+namespace Payrix.Models;
+
+public record EntityNextPayoutResponseItem
+{
+    /// <summary>
+    /// The data object that the API returns for this request. This object is omitted when the Entity has no upcoming Payout.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("data")]
+    public IReadOnlyList<EntityNextPayoutResponse>? Data { get; init; }
+
+    /// <summary>
+    /// An array of zero or more errors that occurred when the API processed the request.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("errors")]
+    public IReadOnlyList<ErrorItem>? Errors { get; init; }
+
+    [JsonExtensionData]
+    public AdditionalProperties AdditionalProperties { get; init; } = [];
+}
